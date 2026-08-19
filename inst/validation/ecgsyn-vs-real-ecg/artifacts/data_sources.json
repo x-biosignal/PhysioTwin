@@ -1,0 +1,10 @@
+{
+  "real_data": "MIT-BIH Arrhythmia Database, record 100 (lead MLII)",
+  "authors": "Moody GB, Mark RG",
+  "repository": "PhysioNet",
+  "doi": "10.13026/C2F305",
+  "license": "ODC-BY 1.0",
+  "url": "https://physionet.org/content/mitdb/",
+  "model": "ECGSYN (McSharry et al. 2003), PhysioTwin::ecgsyn",
+  "record_used": "record 100: 2237 normal beats @ 360 Hz; mean HR 75.3 bpm, SDNN 52 ms. ECGSYN event amplitudes personalised to the real average beat, generated at the real HR + HRV."
+}

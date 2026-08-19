@@ -1,0 +1,113 @@
+---
+title: "Validating a mechanistic ECG simulator against real data"
+subtitle: "A simulation-validation case: personalised ECGSYN reproduces a MIT-BIH beat"
+categories: [ecg, simulation, digital-twin, validation, validated]
+author: "Yusuke Matsui"
+date: "2026-08-18"
+---
+
+> **What this case shows** — a simulator is only credible if it reproduces
+> *reality*, not just if it looks plausible on synthetic data. Here the mechanistic
+> **ECGSYN** dynamical model is validated against a **real** ECG (MIT-BIH record
+> 100). Personalising ECGSYN's five P/Q/R/S/T event amplitudes to the real average
+> beat raises the morphology correlation from **0.62** (generic model) to
+> **0.905** (personalised), and — run at the real heart rate with the real HRV —
+> the generator reproduces the **rate** (75.4 vs 75.3 bpm) and **HRV** (SDNN 46 vs
+> 52 ms). This is the **validation-against-reality** tier, distinct from the
+> synthetic-data parameter recovery that only *verifies* the estimator. **How to
+> read it** — left, the real average beat with the generic and personalised ECGSYN
+> beats overlaid; right, a strip of the personalised generator.
+
+::: {.callout-tip title="The recipe you'll learn"}
+**Workflow** — to validate a mechanistic generator against real data: build the
+real **average beat** (and rate + HRV) from a recording, **personalise** the
+model's parameters to it, then check the model reproduces the morphology, rate and
+variability.
+**Way of thinking** — "the simulator recovers its own parameters on synthetic
+data" is **verification of the estimator**; "the simulator, fit to a subject,
+reproduces that subject's real signal" is **validation of the model** — a
+different, stronger claim, and the one that makes an in-silico experiment
+trustworthy.
+**Ecosystem usage** — `ecgsyn()` (PhysioTwin) as the cardiac generator; the same
+personalise-then-predict protocol validates any twin against held-out real data.
+:::
+
+## Proposition
+
+Personalised ECGSYN reproduces a real ECG: morphology correlation 0.62 → 0.905
+after fitting the event amplitudes, with the generated rate (75.4 vs 75.3 bpm) and
+HRV (SDNN 46 vs 52 ms) matching MIT-BIH record 100.
+
+## Question & goal
+
+**The question is model credibility, not code correctness.** A digital twin's
+in-silico predictions are only worth trusting if the underlying simulator matches
+reality. Parameter recovery on synthetic data (the twin generating its own truth)
+verifies the *estimator*; it says nothing about whether the *model* is right. We
+ask the harder question: fit the mechanistic ECGSYN model to a real subject and
+see whether it reproduces that subject's actual ECG.
+
+## Challenge & approach
+
+We build the real average beat of MIT-BIH record 100 (2237 normal beats, lead
+MLII, R-aligned and normalised), and its heart rate and HRV. We **personalise**
+ECGSYN by fitting its five P/Q/R/S/T event amplitudes to the real beat, then drive
+the personalised model at the real HR with the real HRV and compare the morphology,
+rate and HRV.
+
+## Data
+
+**MIT-BIH record 100** (Moody & Mark, PhysioNet) — 2237 normal beats, lead MLII @
+360 Hz. Details in [`artifacts/data_sources.json`](artifacts/data_sources.json).
+
+## Results
+
+![The real average beat (blue) with the generic ECGSYN beat (grey dashed,
+over-large P and T) and the personalised ECGSYN beat (red, tracking the real
+P-QRS-T); right, a strip of the personalised generator at the matched rate and
+HRV.](artifacts/figure.png)
+
+*How to read this:* the generic model already has the right wave *ordering* but the
+wrong wave *heights* (r = 0.62). Fitting the five event amplitudes — the cardiac
+twin's personalisation — pulls the synthetic beat onto the real one (r = 0.905),
+and the emergent rate and HRV match.
+
+| quantity | value |
+|---|---|
+| morphology correlation, generic ECGSYN | 0.62 |
+| morphology correlation, **personalised** | **0.905** |
+| heart rate (synthetic vs real) | 75.4 vs **75.3** bpm |
+| HRV SDNN (synthetic vs real) | 46 vs **52** ms |
+| real beats used | 2237 |
+
+## Conclusion
+
+The mechanistic ECGSYN model, personalised to a real subject, reproduces that
+subject's ECG morphology, rate and HRV — the model is **validated against
+reality**, not merely verified on synthetic data. The transferable takeaway:
+**separate verifying the estimator (synthetic recovery) from validating the model
+(fit to a subject, reproduce their real signal) — only the latter licenses
+in-silico prediction.**
+
+## Open questions
+
+- Fitting the event **angles and widths** (not only amplitudes), a **multi-lead /
+  VCG** extension, and validation across **many records and leads** would raise the
+  match and map the model's domain of applicability (including pathological beats).
+  *Documented, not escalated.*
+
+## Using this in your own analysis
+
+| step | function | package |
+|---|---|---|
+| generate a mechanistic ECG | `ecgsyn()` | PhysioTwin |
+| coordination / rhythm generators | `kuramoto()` / `cpgMatsuoka()` | PhysioTwin |
+| validity harness (V&V report) | `validateTwin()` | PhysioTwin |
+| identifiability / sensitivity | `profileLikelihood()` / `sobolIndices()` | PhysioTwin |
+
+One line for the technical reader: every number traces to
+[`artifacts/validation_summary.csv`](artifacts/validation_summary.csv) and
+[`artifacts/avg_beat.csv`](artifacts/avg_beat.csv), re-checked by
+[`audit.py`](audit.py); the real beat is extracted by
+[`extract_real_ecg.py`](extract_real_ecg.py). This case lives with the PhysioTwin
+prototype and migrates to public PhysioRecipes when PhysioTwin is published.

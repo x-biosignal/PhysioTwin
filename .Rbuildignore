@@ -1,0 +1,13 @@
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^\.github$
+^paper\.md$
+^paper\.bib$
+^paper$
+^\.Rproj\.user$
+^.*\.Rproj$
+^LICENSE\.md$
+^_pkgdown\.yml$
+^docs$
+^CONTRIBUTING\.md$
+^CODE_OF_CONDUCT\.md$

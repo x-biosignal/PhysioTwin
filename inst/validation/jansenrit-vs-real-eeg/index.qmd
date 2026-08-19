@@ -1,0 +1,132 @@
+---
+title: "Validating a mechanistic EEG simulator against real data"
+subtitle: "A simulation-validation case: the Jansen-Rit neural mass reproduces a real alpha rhythm"
+categories: [eeg, simulation, digital-twin, validation, validated]
+author: "Yusuke Matsui"
+date: "2026-08-18"
+---
+
+> **What this case shows** — a mechanistic generator is only credible if it
+> reproduces *reality*, not just if it oscillates plausibly on its own. Here the
+> **Jansen-Rit** neural-mass model — a single cortical column of coupled neural
+> populations — is validated against a **real** eyes-closed occipital EEG
+> (PhysioNet eegmmidb, subject S001). The real channel has a **10.0 Hz alpha peak**
+> carrying 67% of its 1–40 Hz power; the generic Jansen-Rit column emits alpha at
+> **10.75 Hz**, and scaling its membrane time constants ×0.96 to the real alpha
+> frequency puts the model's peak at **10.0 Hz**, with alpha the dominant band in
+> both. A bare column *over-concentrates* power in alpha (relative alpha 0.99 vs the
+> real 0.67); adding a physiological **1/f (aperiodic) background** spreads power off
+> the peak and brings the model's relative alpha to **0.65**, matching the real 0.67
+> — so both the peak *and* the broadband spectral shape line up. This is the
+> **validation-against-reality** tier, distinct from the synthetic-data recovery that
+> only *verifies* an estimator. **How to read it** — left, the real and
+> personalised-model power spectra overlaid, both peaking in the alpha band; right, a
+> strip of the personalised generator's alpha rhythm.
+
+::: {.callout-tip title="The recipe you'll learn"}
+**Workflow** — to validate a mechanistic rhythm generator against real data:
+measure the real signal's **spectral peak** and **band structure**, **personalise**
+the model's physical parameters (here the membrane time constants to the measured
+peak, and the **1/f background amplitude** to the measured relative band power), then
+check the model reproduces the peak frequency, the band dominance and the broadband
+spectral shape.
+**Way of thinking** — "the generator recovers its own parameters on synthetic data"
+is **verification of the estimator**; "the generator, tuned to a subject, reproduces
+that subject's real rhythm" is **validation of the model** — a different, stronger
+claim, and the one that makes an in-silico experiment trustworthy. It is a claim
+about the emergent **rhythm**, not the exact stochastic waveform.
+**Ecosystem usage** — `jansenRit()` (PhysioTwin) as the neural-mass generator, with
+its `aperiodic=` argument (`aperiodicNoise()`) adding the physiological 1/f floor;
+`bandPower()` for the band structure; the same personalise-then-compare protocol
+validates any mechanistic rhythm generator against real recordings.
+:::
+
+## Proposition
+
+The mechanistic Jansen-Rit model reproduces a real EEG's alpha rhythm: a real
+eyes-closed occipital channel peaks at 10.0 Hz (relative alpha power 0.67), the
+generic model peaks at 10.75 Hz, and personalising the membrane time constants
+(×0.96) matches the real peak at 10.0 Hz — with alpha the dominant band in both.
+
+## Question & goal
+
+**The question is model credibility, not code correctness.** A digital twin's
+in-silico predictions are only worth trusting if the underlying generator matches
+reality. A model oscillating at "about 10 Hz" on synthetic settings verifies the
+*implementation*; it says nothing about whether the *model* matches a brain. We ask
+the harder question: does the mechanistic column, tuned to a real subject's alpha
+frequency, reproduce that subject's actual resting EEG rhythm?
+
+## Challenge & approach
+
+We take an eyes-closed occipital channel (O1) of eegmmidb subject S001, run R02,
+and compute its power spectrum (Welch, 8 s segments): the dominant frequency in
+1–40 Hz and the relative alpha (8–13 Hz) power. We then generate `jansenRit()`,
+compute the same summaries the same way, and **personalise** the model in two steps:
+first scale its excitatory/inhibitory membrane time constants until the model's alpha
+peak matches the real one, then fit the amplitude of a physiological **1/f (aperiodic)
+background** (`jansenRit(aperiodic=)`) until the model's relative alpha matches the
+real one — a bare cortical column carries only its own rhythm, whereas a real scalp
+channel sits on a broadband 1/f floor.
+
+## Data
+
+**eegmmidb S001R02**, channel O1 (Schalk et al., PhysioNet) — 61 s eyes-closed
+resting EEG @ 160 Hz. Details in [`artifacts/data_sources.json`](artifacts/data_sources.json).
+
+## Results
+
+![The real EEG power spectrum (blue) and the personalised Jansen-Rit spectrum
+(red), both peaking in the 8–13 Hz alpha band (grey dashed); right, a strip of the
+personalised generator's alpha rhythm.](artifacts/figure.png)
+
+*How to read this:* the mechanistic column already produces alpha near the right
+frequency (10.75 Hz); scaling the membrane time constants — the neural mass's
+personalisation — pulls its peak onto the real 10.0 Hz, and adding the fitted 1/f
+background spreads its power off the peak so the relative alpha matches the real
+value too. Alpha is the dominant band in both spectra.
+
+| quantity | value |
+|---|---|
+| real alpha peak | 10.0 Hz |
+| Jansen-Rit alpha, generic | 10.75 Hz |
+| Jansen-Rit alpha, **personalised** | **10.0 Hz** |
+| relative alpha — real | 0.67 |
+| relative alpha — model, bare column | 0.99 (over-concentrated) |
+| relative alpha — model, **+ fitted 1/f background** (×1.8 SD) | **0.65** (matches real) |
+| alpha the dominant band (real / model) | yes / yes |
+
+## Conclusion
+
+The mechanistic Jansen-Rit model, tuned to a real subject's alpha frequency and
+sat on a fitted physiological 1/f background, reproduces both that subject's emergent
+alpha rhythm *and* its broadband spectral shape — the model is **validated against
+reality**, not merely verified on synthetic settings. The transferable takeaway:
+**separate verifying the estimator (synthetic recovery) from validating the model
+(tune to a subject, reproduce their real rhythm) — and be explicit that the claim
+is about the emergent rhythm and spectral shape, not the exact waveform, and that the
+1/f amplitude here is calibrated to the record rather than emergent from the mechanism.**
+
+## Open questions
+
+- The **1/f background** that now reproduces the broadband spectrum is *fit* to the
+  record (its amplitude tuned to the real relative alpha); coupling several columns
+  (Jansen-Rit networks) would let that aperiodic floor **emerge from the mechanism**
+  instead of being calibrated. Validating across many **subjects, channels and
+  eyes-open/closed states** would then map the model's domain of applicability.
+  *Documented, not escalated.*
+
+## Using this in your own analysis
+
+| step | function | package |
+|---|---|---|
+| generate a mechanistic EEG | `jansenRit()` | PhysioTwin |
+| add a physiological 1/f background | `jansenRit(aperiodic=)` / `aperiodicNoise()` | PhysioTwin |
+| relative band power | `bandPower()` | PhysioTwin |
+| validity harness (V&V report) | `validateTwin()` | PhysioTwin |
+
+One line for the technical reader: every number traces to
+[`artifacts/validation_summary.csv`](artifacts/validation_summary.csv) and
+[`artifacts/psd.csv`](artifacts/psd.csv), re-checked by [`audit.py`](audit.py); the
+real channel is extracted by [`extract_real_eeg.py`](extract_real_eeg.py). This case
+lives with PhysioTwin and migrates to public PhysioRecipes.

@@ -1,0 +1,10 @@
+{
+  "real_data": "EEG Motor Movement/Imagery Database (eegmmidb), subject S001, run R02 (eyes closed), channel O1",
+  "authors": "Schalk G, McFarland DJ, Hinterberger T, Birbaumer N, Wolpaw JR",
+  "repository": "PhysioNet",
+  "doi": "10.13026/C28G6P",
+  "license": "ODC-BY 1.0",
+  "url": "https://physionet.org/content/eegmmidb/",
+  "model": "Jansen-Rit neural-mass model (Jansen & Rit 1995), PhysioTwin::jansenRit",
+  "record_used": "S001R02 O1 @ 160 Hz, 9760 samples; real alpha peak 10.0 Hz (rel-alpha 0.67). Jansen-Rit membrane time constants scaled x0.960 to match the real alpha frequency, plus a fitted 1/f background of amplitude 1.80 (jansenRit aperiodic=) to match the real relative alpha; model rel-alpha 0.65 (was 0.99 without the 1/f background)."
+}

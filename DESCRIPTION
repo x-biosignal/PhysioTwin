@@ -1,0 +1,63 @@
+Package: PhysioTwin
+Title: Digital-Twin Simulation and Data Assimilation for Physiological and Movement Systems
+Version: 0.1.1
+Authors@R: person("Yusuke", "Matsui", email = "mail.to.matsui@gmail.com", role = c("aut","cre"))
+Description: A digital-twin engine that couples mechanistic simulation of
+    movement and physiology with realistic sensor emulation and data
+    assimilation, so a subject-specific model can be personalised from real
+    measurements and then used for in-silico experiments. It ships a parameterised
+    limb model (forward dynamics) and mechanistic physiological and network
+    generators -- a Jansen-Rit neural-mass EEG column with an optional 1/f
+    aperiodic background, a McSharry limit-cycle
+    electrocardiogram, a Windkessel arterial blood-pressure model with a
+    closed-loop baroreflex, a respiration waveform and respiratory-sinus-arrhythmia
+    heart-rate-variability generator, and Kuramoto coupled-oscillator and Matsuoka
+    central-pattern-generator rhythms. A forward sensor-emulation layer turns clean
+    signals into realistic recordings (inertial-measurement-unit, optical-marker
+    occlusion, surface-electromyography electrode and electrocardiogram lead), with
+    richer chains for multi-channel electromyography crosstalk and amplifier
+    characteristics, multi-lead electrocardiogram and analogue-to-digital
+    conversion. A data-assimilation layer personalises the twin to recorded data
+    with a family of state-space estimators (unscented, extended, particle and
+    ensemble Kalman filters), likelihood-free Bayesian calibration (rejection and
+    sequential Monte-Carlo approximate Bayesian computation), Markov-chain Monte-
+    Carlo, a Gaussian-process surrogate and GP-accelerated (Bayesian-optimisation)
+    calibration -- including personalising the closed-loop cardiovascular-
+    respiratory twin to measured heart-rate and blood-pressure variability -- as
+    well as particle Markov-chain Monte-Carlo and particle Gibbs (with ancestor
+    sampling) for whole-waveform Bayesian fitting -- including a whole-record fit of
+    the closed-loop cardiovascular model that identifies the baroreflex and
+    respiratory gains a summary fit cannot, with either a resonant Mayer-oscillator
+    or a broadband first-order-autoregressive low-frequency component for records
+    without a distinct Mayer peak -- and Fisher-information optimal
+    experimental design for choosing the most informative experimental condition. Applications include single- and
+    population-level in-silico intervention (perturb parameters and predict the
+    change, with effect size, responder rate and statistical power), multi-modal
+    coupling, and labelled synthetic training-data generation with sensor domain
+    randomisation, all backed by a simulation validity-and-verification harness
+    (identifiability, global sensitivity and validation against real recordings). A
+    clinical decision loop ties these together as research tooling: a personalised
+    twin is certified by a validation gate (goodness of fit and parameter
+    identifiability) before it may advise, candidate interventions are scored with
+    their predictive uncertainty and ranked on multiple criteria, mechanistic
+    predictions are reconciled with external evidence rather than overriding it, and
+    a follow-up measurement is checked against the predicted interval. A closed-loop
+    cardiovascular-respiratory model couples a delayed baroreflex with respiration to
+    produce emergent Mayer waves and respiratory sinus arrhythmia, and an optional
+    bridge holds the twin's predictions to account against a real single-case
+    (SCED/MCID/ICF) clinical evaluation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Maintainer: Yusuke Matsui <mail.to.matsui@gmail.com>
+URL: https://github.com/x-biosignal/PhysioTwin, https://x-biosignal.r-universe.dev/PhysioTwin
+BugReports: https://github.com/x-biosignal/PhysioTwin/issues
+Imports:
+    stats
+Suggests:
+    testthat (>= 3.0.0),
+    PhysioRehab,
+    PhysioAppKit
+Additional_repositories: https://x-biosignal.r-universe.dev
+Config/testthat/edition: 3

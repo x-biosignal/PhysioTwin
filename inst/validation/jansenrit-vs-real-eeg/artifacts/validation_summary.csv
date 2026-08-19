@@ -1,0 +1,12 @@
+"metric","value"
+"real_dominant_hz",10
+"model_dominant_default",10.75
+"model_dominant_personalized",10
+"real_rel_alpha",0.672
+"model_rel_alpha",0.646
+"model_rel_alpha_noaperiodic",0.988
+"real_alpha_is_top",1
+"model_alpha_is_top",1
+"ab_scale",0.96
+"aperiodic_scale",1.8
+"fs_hz",160

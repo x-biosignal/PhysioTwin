@@ -1,0 +1,11 @@
+"metric","value"
+"real_sd_ms",47.5
+"model_sd_ms",45.8
+"real_lf_hf",6.86
+"model_lf_hf",5.98
+"real_lf_peak_hz",0.102
+"real_hf_peak_hz",0.178
+"fit_g",21.96
+"fit_rho",0.754
+"fit_A_rsa",1.24
+"n_beats",600

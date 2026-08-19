@@ -1,0 +1,10 @@
+{
+  "dataset": "EEG Motor Movement/Imagery Database (eegmmidb)",
+  "subject": "S001",
+  "run": "R02 (eyes closed, baseline)",
+  "channel": "O1",
+  "fs": 160.0,
+  "n_samples": 9760,
+  "real_dominant_hz": 10.0,
+  "real_rel_alpha": 0.672
+}

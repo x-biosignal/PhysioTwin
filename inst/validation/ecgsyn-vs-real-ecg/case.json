@@ -1,0 +1,35 @@
+{
+  "id": "ecgsyn-vs-real-ecg",
+  "title": "Validating a mechanistic ECG simulator against real data: personalised ECGSYN reproduces a MIT-BIH beat",
+  "modality": ["ecg", "simulation", "digital-twin", "validation"],
+  "packages": ["PhysioTwin"],
+  "dataset": {
+    "name": "MIT-BIH Arrhythmia Database, record 100 (lead MLII)",
+    "version": "PhysioNet mitdb",
+    "record": "record 100: 2237 normal beats @ 360 Hz; mean HR 75.3 bpm, SDNN 52 ms",
+    "url": "https://physionet.org/content/mitdb/",
+    "public": true,
+    "citation": "Moody GB, Mark RG. The impact of the MIT-BIH Arrhythmia Database. IEEE Eng Med Biol 2001;20:45-50. PhysioNet doi:10.13026/C2F305 (ODC-BY 1.0)."
+  },
+  "proposition": "This is a SIMULATION-VALIDATION case: does the mechanistic ECGSYN model (a dynamical-system ECG generator) reproduce a REAL ECG, not just look plausible on synthetic data? Personalising ECGSYN's five P/Q/R/S/T event amplitudes to record 100's average beat raises the morphology correlation from 0.62 (generic model) to 0.905 (personalised), and the generator, run at the real heart rate with the real HRV, reproduces the rate (75.4 vs 75.3 bpm) and HRV (SDNN 46 vs 52 ms). The model is VALIDATED against reality, distinct from being merely verified on synthetic data.",
+  "opdag": ["ecgsyn"],
+  "claims": [
+    { "id": "morph_person", "statement": "morphology correlation of the PERSONALISED ECGSYN average beat with the real beat", "value": 0.905, "artifact": "artifacts/validation_summary.csv", "status": "PASS" },
+    { "id": "morph_default", "statement": "morphology correlation of the GENERIC (unpersonalised) ECGSYN beat",              "value": 0.621, "artifact": "artifacts/validation_summary.csv", "status": "PASS" },
+    { "id": "hr_match",      "statement": "synthetic mean heart rate (bpm) vs the real 75.3",                                 "value": 75.4,  "artifact": "artifacts/validation_summary.csv", "status": "PASS" },
+    { "id": "sdnn_syn",      "statement": "synthetic HRV SDNN (ms) vs the real 52",                                          "value": 46,    "artifact": "artifacts/validation_summary.csv", "status": "PASS" },
+    { "id": "n_beats",       "statement": "real beats used to build the average-beat template",                              "value": 2237,  "artifact": "artifacts/validation_summary.csv", "status": "PASS" }
+  ],
+  "validation": {
+    "reference": "A mechanistic ECG generator is VALIDATED (not merely verified) if, personalised to a real recording, it reproduces (1) the beat MORPHOLOGY (the P-QRS-T template, high correlation), (2) the HEART RATE, and (3) the heart-rate VARIABILITY. ECGSYN (McSharry et al. 2003) is the canonical dynamical ECG model; personalising its event amplitudes to a real average beat and driving it at the real HR + HRV must match all three.",
+    "data": "REAL -- MIT-BIH record 100 (PhysioNet), 2237 normal beats, lead MLII @ 360 Hz",
+    "artifacts": ["artifacts/validation_summary.csv", "artifacts/avg_beat.csv"],
+    "all_pass": true,
+    "note": "This is the L4 (validation-against-reality) tier of simulation validity, distinct from synthetic-data parameter recovery (which only VERIFIES the estimator). Personalising the five ECGSYN event amplitudes to record 100's average beat lifts the morphology correlation from 0.62 (generic) to 0.905, and the personalised generator reproduces the rate (75.4 vs 75.3 bpm) and HRV (SDNN 46 vs 52 ms). Honest scope: (1) single lead (MLII), a normal-sinus record -- ECGSYN is a canonical single-lead model (no multi-lead/VCG, no pathology-specific morphology); (2) the five-amplitude personalisation captures the relative wave heights but not fine ST/T detail (hence 0.905, not 1.0); (3) the SDNN match is partly by construction (HRV is a model input) -- the genuine model OUTPUTS validated here are the morphology and the emergent rate. This case lives with the PhysioTwin prototype and migrates to public PhysioRecipes when PhysioTwin is published."
+  },
+  "open_questions": [
+    { "q": "Fitting the event angles and widths (not only amplitudes), and a multi-lead / VCG extension, would push the morphology match higher and cover pathological beats; validating across many records + leads would quantify the model's domain of applicability. Documented, not escalated.", "artifact": "artifacts/avg_beat.csv", "escalate": null }
+  ],
+  "reference_tools": [],
+  "status": "validated"
+}

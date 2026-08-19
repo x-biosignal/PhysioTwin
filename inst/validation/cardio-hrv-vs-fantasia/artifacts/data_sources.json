@@ -1,0 +1,10 @@
+{
+  "real_data": "Fantasia Database, young healthy subject record f1y03 (ECG beat annotations)",
+  "authors": "Iyengar N, Peng CK, Morin R, Goldberger AL, Lipsitz LA",
+  "repository": "PhysioNet",
+  "doi": "10.13026/C21596",
+  "license": "ODC-BY 1.0",
+  "url": "https://physionet.org/content/fantasia/",
+  "model": "closed-loop cardiovascular state-space model, PhysioTwin::cardioStateSpace / personalizeCardioWaveform",
+  "record_used": "f1y03, 600-beat resting segment @ 250 Hz; mean RR 900 ms, SD 47.5 ms, LF/HF 6.86 (Mayer 0.102 Hz, resp 0.178 Hz). Closed-loop parameters fit to the whole record by particle-MCMC-family Kalman-likelihood inference: g 22.0, rho 0.75, A_rsa 1.2."
+}

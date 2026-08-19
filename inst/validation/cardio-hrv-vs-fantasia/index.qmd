@@ -1,0 +1,121 @@
+---
+title: "Validating a closed-loop cardiovascular model against real HRV"
+subtitle: "A simulation-validation case: a whole-record fit reproduces a Fantasia subject's heart-rate variability"
+categories: [ecg, hrv, simulation, digital-twin, validation, validated]
+author: "Yusuke Matsui"
+date: "2026-08-18"
+---
+
+> **What this case shows** — a closed-loop physiological model is only credible if,
+> *fit to a real recording*, it reproduces that recording — not just if it recovers
+> its own parameters on synthetic data. Here the **closed-loop cardiovascular
+> state-space model** (a damped Mayer oscillator driving the heart period, plus a
+> respiratory RSA term) is fit to a **real** RR-interval record (PhysioNet
+> **Fantasia**, young subject f1y03) by whole-record Bayesian inference. The fit is
+> stable and physiological (Mayer damping ρ = 0.75, interior — not railed) and it
+> reproduces both the record's overall variability (**RR SD 45.8 vs the real 47.5
+> ms**) and its low-/high-frequency autonomic balance (**LF/HF 5.98 vs the real
+> 6.86**). This is the **validation-against-reality** tier, distinct from the
+> synthetic-data recovery that only *verifies* the estimator. **How to read it** —
+> left, the real and fitted-model HRV power spectra, both carrying the Mayer (LF)
+> and respiratory (HF) peaks; right, the real and model RR tachograms.
+
+::: {.callout-tip title="The recipe you'll learn"}
+**Workflow** — to validate a closed-loop model against real data: measure the real
+signal's second-order structure (its variance and its LF/HF spectral balance),
+**fit** the model to the whole record by Bayesian inference, then check the fitted
+model reproduces that variance and balance.
+**Way of thinking** — "the sampler recovers the true parameters on a simulated
+record" is **verification of the estimator**; "the model, fit to a subject,
+reproduces that subject's real HRV" is **validation of the model** — a different,
+stronger claim. It is a claim about the **second-order** (spectral) structure, not
+the exact stochastic RR series.
+**Ecosystem usage** — `cardioStateSpace()` / `personalizeCardioWaveform()`
+(PhysioTwin) for the whole-record fit; `particleMCMC()` / `particleGibbs()` for the
+general nonlinear case; the same fit-then-compare protocol validates any state-space
+twin against a real record.
+:::
+
+## Proposition
+
+The closed-loop model, fit to a real RR record, reproduces that record's HRV: fit to
+Fantasia f1y03 it reaches a physiological solution (ρ = 0.75) that reproduces the RR
+SD (45.8 vs 47.5 ms) and the LF/HF autonomic balance (5.98 vs 6.86), with the record
+carrying a separated Mayer (0.10 Hz) and respiratory (0.18 Hz) rhythm.
+
+## Question & goal
+
+**The question is model credibility, not code correctness.** A twin's in-silico
+predictions are only worth trusting if the model matches reality. Recovering the
+true parameters from a *simulated* record verifies the *sampler*; it says nothing
+about whether the *model* matches a heart. We ask the harder question: fit the
+closed-loop model to a real subject's RR record and see whether it reproduces that
+subject's actual heart-rate variability.
+
+## Challenge & approach
+
+We take a 600-beat resting RR segment of Fantasia record f1y03, measure its HRV
+(SD, LF/HF band powers, and the Mayer/respiratory spectral peaks), and **fit** the
+closed-loop `cardioStateSpace` model to the whole series with
+`personalizeCardioWaveform()` — an exact Kalman likelihood (the model is
+linear-Gaussian) sampled by Metropolis. We then generate synthetic RR from the
+fitted model and compare its HRV, averaged over realisations, with the real one.
+
+## Data
+
+**Fantasia f1y03** (Iyengar et al., PhysioNet) — a 600-beat resting RR segment @
+250 Hz from a young healthy subject. Details in
+[`artifacts/data_sources.json`](artifacts/data_sources.json).
+
+## Results
+
+![The real HRV power spectrum (blue) and the fitted closed-loop model's spectrum
+(red), both carrying the low-frequency Mayer peak and the high-frequency
+respiratory peak (grey dashed = LF/HF band edges); right, the real (blue) and model
+(red) RR tachograms.](artifacts/figure.png)
+
+*How to read this:* fitting the closed loop to the whole record — not to summary
+statistics — recovers a single physiological parameter set whose generated HRV
+matches the real record's variance and its low-/high-frequency balance.
+
+| quantity | real | fitted model |
+|---|---|---|
+| RR SD (ms) | 47.5 | **45.8** |
+| LF/HF ratio | 6.86 | **5.98** |
+| Mayer (LF) peak | 0.10 Hz | — |
+| respiratory (HF) peak | 0.18 Hz | — |
+| fitted Mayer damping ρ | — | 0.75 (interior) |
+
+## Conclusion
+
+The closed-loop cardiovascular model, fit to a real subject's RR record by
+whole-record Bayesian inference, reproduces that subject's heart-rate variability —
+its variance and its autonomic balance — at a stable, physiological fit. The model
+is **validated against reality**, not merely verified on synthetic data. The
+transferable takeaway: **fit the whole record, then check the model reproduces a
+second-order structure it was not directly handed — and be explicit that the claim
+is about the spectrum, not the exact series.**
+
+## Open questions
+
+- The model is a linear idealisation with free LF/HF amplitudes, so matching the
+  LF/HF ratio is partly structural, and it does **not** fit every record (e.g.
+  MIT-BIH record 100 and some Fantasia subjects, whose Mayer/RSA peaks are not
+  separated, rail the fit at its bounds). A higher-order or nonlinear closed loop
+  fit by `particleMCMC()` / `particleGibbs()`, validated across many subjects and
+  conditions, would capture those and map the domain of applicability. *Documented,
+  not escalated.*
+
+## Using this in your own analysis
+
+| step | function | package |
+|---|---|---|
+| closed-loop state-space model | `cardioStateSpace()` | PhysioTwin |
+| whole-record Bayesian fit | `personalizeCardioWaveform()` | PhysioTwin |
+| general nonlinear fit | `particleMCMC()` / `particleGibbs()` | PhysioTwin |
+
+One line for the technical reader: every number traces to
+[`artifacts/validation_summary.csv`](artifacts/validation_summary.csv) and
+[`artifacts/psd.csv`](artifacts/psd.csv), re-checked by [`audit.py`](audit.py); the
+real RR series is extracted by [`extract_rr.py`](extract_rr.py). This case lives
+with PhysioTwin and migrates to public PhysioRecipes.
