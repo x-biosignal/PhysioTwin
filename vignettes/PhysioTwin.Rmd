@@ -1,0 +1,99 @@
+---
+title: "PhysioTwin: the movement digital-twin pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{PhysioTwin: the movement digital-twin pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+A *digital twin* couples a mechanistic model (whose parameters are physical or
+clinical quantities) with realistic sensor emulation and data assimilation, so a
+subject-specific model can be **personalised** from real measurements and then
+used for **in-silico experiments**. This vignette runs the four layers
+end-to-end on the movement modality --- the reference vertical slice --- using
+only synthetic data, so it is fully reproducible offline.
+
+```{r setup}
+library(PhysioTwin)
+set.seed(1)
+```
+
+## 1--2. A "real" subject, recorded through a noisy IMU
+
+Layer 1 is a mechanistic single-joint limb whose parameters map to clinical
+quantities (muscle `strength`, passive `damping`, joint `stiffness`). Layer 2
+turns the clean simulated motion into a realistic inertial-measurement-unit
+stream with bias and noise.
+
+```{r simulate}
+subject <- limbTwin(strength = 5.5, damping = 0.7, stiffness = 3.2)
+truth   <- simulateTwin(subject, duration = 4, dt = 0.02, theta0 = 0.1)
+rec     <- imuMeasure(truth,
+                      imuSensor(gyro_bias = 0.015, gyro_noise = 0.035,
+                                accel_noise = 0.12))
+head(rec, 3)
+```
+
+## 3. Personalise the twin from the recording
+
+Layer 3 assimilates the IMU stream into a twin, starting from a *wrong* prior
+and recovering the subject's parameters. `n_starts` is reduced here to keep the
+vignette fast; the default (25) is more robust.
+
+```{r personalize}
+prior <- limbTwin(strength = 4, damping = 0.3, stiffness = 3.2)
+twin  <- personalizeTwin(rec, prior, estimate = c("strength", "damping"),
+                         dt = 0.02, n_starts = 3)
+twin$twin[c("strength", "damping")]   # compare with the true 5.5 and 0.7
+```
+
+## 4a. In-silico intervention
+
+With a personalised twin, perturb parameters and read off the predicted change:
+here a rehabilitation that adds 40% strength and removes 30% damping.
+
+```{r intervention}
+effect <- insilicoIntervention(twin$twin,
+                               scale = list(strength = 1.4, damping = 0.7),
+                               duration = 5, dt = 0.01)
+effect$outcomes
+```
+
+## 4b. A labelled synthetic training set
+
+The same generators produce domain-randomised, labelled data for machine
+learning --- each row is one simulated subject with its true parameters and
+signal features.
+
+```{r trainingdata}
+train <- generateTrainingData(n = 24, duration = 4, dt = 0.02, seed = 7)
+dim(train)
+head(as.data.frame(train)[, c("strength", "damping", "stiffness")], 3)
+```
+
+## Validity and verification
+
+Simulation validity is not the same as matching one dataset. `validateTwin()`
+separates **verification** (are the equations solved correctly?) from
+**validation** (are they the right equations?) and reports the operating
+envelope. The cheap checks are shown here; `recovery`, `sensitivity` and
+`prediction` (which refit the twin many times) are available via the `checks`
+argument.
+
+```{r validate}
+validateTwin(limbTwin(strength = 6, damping = 0.5, stiffness = 6),
+             checks = c("verification", "identifiability", "domain"))
+```
+
+## Where next
+
+The physiological generators (`jansenRit()` for EEG, `ecgsyn()` /
+`windkessel()` for the cardiovascular system, `respiration()`, `kuramoto()`)
+and the wider estimator family (`unscentedKalmanFilter()`, `particleFilter()`,
+`abcSMC()`, `gpCalibrate()`) are the building blocks for coupling the other
+modalities into this same loop. See `?PhysioTwin` for the full map.
